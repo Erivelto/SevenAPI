@@ -142,6 +142,7 @@ builder.Services.AddScoped<IDiariaDescontoRepository, DiariaDescontoRepository>(
 builder.Services.AddScoped<IRelatorioRepository, RelatorioRepository>();
 builder.Services.AddScoped<IUsuarioPermissaoRepository, UsuarioPermissaoRepository>();
 builder.Services.AddScoped<IMenuRepository, MenuRepository>();
+builder.Services.AddScoped<IAprovacaoRepository, AprovacaoRepository>();
 
 // Registrar Services
 builder.Services.AddScoped<IColaboradorService, ColaboradorService>();
@@ -157,6 +158,7 @@ builder.Services.AddScoped<IRelatorioService, RelatorioService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IUsuarioPermissaoService, UsuarioPermissaoService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
+builder.Services.AddScoped<IAprovacaoService, AprovacaoService>();
 
 // Configurar CORS
 builder.Services.AddCors(options =>

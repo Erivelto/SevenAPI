@@ -210,6 +210,135 @@ BEGIN
 END
 GO
 
+-- ============================================
+-- Tabela: Menu
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Menu')
+BEGIN
+    CREATE TABLE Menu (
+        Codigo INT IDENTITY(1,1) PRIMARY KEY,
+        Descricao NVARCHAR(100) NOT NULL,
+        Icone     NVARCHAR(100) NULL,
+        Ordem     INT NOT NULL DEFAULT 0,
+        Ativo     BIT NOT NULL DEFAULT 1
+    );
+END
+GO
+
+-- ============================================
+-- Tabela: SubMenu
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'SubMenu')
+BEGIN
+    CREATE TABLE SubMenu (
+        Codigo      INT IDENTITY(1,1) PRIMARY KEY,
+        CodigoMenu  INT NOT NULL,
+        Descricao   NVARCHAR(100) NOT NULL,
+        Icone       NVARCHAR(100) NULL,
+        Url         NVARCHAR(200) NULL,
+        Ordem       INT NOT NULL DEFAULT 0,
+        Ativo       BIT NOT NULL DEFAULT 1,
+        CONSTRAINT FK_SubMenu_Menu FOREIGN KEY (CodigoMenu) REFERENCES Menu(Codigo)
+    );
+END
+GO
+
+-- ============================================
+-- Tabela: UsuarioPermissao
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'UsuarioPermissao')
+BEGIN
+    CREATE TABLE UsuarioPermissao (
+        Id             INT IDENTITY(1,1) PRIMARY KEY,
+        IdUsuario      INT NOT NULL,
+        CodigoSubMenu  INT NOT NULL,
+        ApenasLeitura  BIT NOT NULL DEFAULT 0,
+        Ativo          BIT NOT NULL DEFAULT 1,
+        DataCadastro   DATETIME NULL,
+        CONSTRAINT FK_UsuarioPermissao_Usuario  FOREIGN KEY (IdUsuario)     REFERENCES Usuario(Id),
+        CONSTRAINT FK_UsuarioPermissao_SubMenu  FOREIGN KEY (CodigoSubMenu) REFERENCES SubMenu(Codigo)
+    );
+END
+GO
+
+-- Adicionar coluna ApenasLeitura caso a tabela ja exista sem ela
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'UsuarioPermissao')
+   AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('UsuarioPermissao') AND name = 'ApenasLeitura')
+BEGIN
+    ALTER TABLE UsuarioPermissao
+    ADD ApenasLeitura BIT NOT NULL DEFAULT 0;
+END
+GO
+
+-- ============================================
+-- Dados de Exemplo: Menu e SubMenu
+-- ============================================
+IF NOT EXISTS (SELECT * FROM Menu)
+BEGIN
+    INSERT INTO Menu (Descricao, Icone, Ordem) VALUES
+    ('Cadastros',  'mdi-folder',    1),
+    ('Operacional','mdi-briefcase', 2),
+    ('Relatorios', 'mdi-chart-bar', 3);
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM SubMenu)
+BEGIN
+    INSERT INTO SubMenu (CodigoMenu, Descricao, Icone, Url, Ordem) VALUES
+    (1, 'Colaboradores',  'mdi-account-group',  '/api/Colaborador',       1),
+    (1, 'Funcoes',        'mdi-tag',             '/api/Funcao',            2),
+    (1, 'Postos',         'mdi-map-marker',      '/api/Posto',             3),
+    (1, 'Supervisores',   'mdi-account-tie',     '/api/Supervisor',        4),
+    (1, 'Usuarios',       'mdi-account-cog',     '/api/Usuario',           5),
+    (2, 'Diarias',        'mdi-calendar-check',  '/api/Diaria',            1),
+    (2, 'Diaria Disponivel','mdi-calendar-plus', '/api/DiariaDisponivel',  2),
+    (2, 'Descontos',      'mdi-minus-circle',    '/api/DiariaDesconto',    3),
+    (3, 'Lista Diarias',  'mdi-file-table',      '/api/Relatorio',         1);
+END
+GO
+
+-- ============================================
+-- Tabela: AprovacaoConfig
+-- Define qual usuario aprova o CREATE de cada entidade.
+-- Gerenciado pelo usuario master. Pode ter multiplos aprovadores por entidade.
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AprovacaoConfig')
+BEGIN
+    CREATE TABLE AprovacaoConfig (
+        Id                 INT IDENTITY(1,1) PRIMARY KEY,
+        Entidade           NVARCHAR(100) NOT NULL,
+        IdUsuarioAprovador INT NOT NULL,
+        Ativo              BIT NOT NULL DEFAULT 1,
+        DataCadastro       DATETIME NOT NULL DEFAULT GETDATE(),
+        CONSTRAINT FK_AprovacaoConfig_Usuario FOREIGN KEY (IdUsuarioAprovador) REFERENCES Usuario(Id)
+    );
+END
+GO
+
+-- ============================================
+-- Tabela: AprovacaoStage
+-- Fila de solicitacoes de criacao aguardando aprovacao.
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AprovacaoStage')
+BEGIN
+    CREATE TABLE AprovacaoStage (
+        Id                   INT IDENTITY(1,1) PRIMARY KEY,
+        Entidade             NVARCHAR(100)  NOT NULL,
+        PayloadJson          NVARCHAR(MAX)  NOT NULL,
+        IdUsuarioSolicitante INT            NOT NULL,
+        IdUsuarioAprovador   INT            NOT NULL,
+        Status               NVARCHAR(20)   NOT NULL DEFAULT 'Pendente',
+        DataSolicitacao      DATETIME       NOT NULL DEFAULT GETDATE(),
+        DataAprovacao        DATETIME       NULL,
+        Observacao           NVARCHAR(500)  NULL,
+        IdRegistroGerado     INT            NULL,
+        CONSTRAINT FK_AprovacaoStage_Solicitante FOREIGN KEY (IdUsuarioSolicitante) REFERENCES Usuario(Id),
+        CONSTRAINT FK_AprovacaoStage_Aprovador   FOREIGN KEY (IdUsuarioAprovador)   REFERENCES Usuario(Id),
+        CONSTRAINT CK_AprovacaoStage_Status CHECK (Status IN ('Pendente','Aprovado','Rejeitado'))
+    );
+END
+GO
+
 PRINT 'Banco de dados criado com sucesso!';
 GO
 
