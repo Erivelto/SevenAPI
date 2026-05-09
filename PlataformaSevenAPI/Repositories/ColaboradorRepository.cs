@@ -21,7 +21,14 @@ namespace PlataformaSeven.API.Repositories
             return await connection.QueryAsync<Colaborador>(query);
         }
 
-        public async Task<Colaborador?> GetByIdAsync(int id)
+		public async Task<Colaborador?> GetByReferenciaAsync(string referencia)
+		{
+			var query = "SELECT * FROM Colaborador WHERE Referencia = @Referencia AND Excluido = 0";
+
+			using var connection = _context.CreateConnection();
+			return await connection.QueryFirstOrDefaultAsync<Colaborador>(query, new { Referencia = referencia });
+		}
+		public async Task<Colaborador?> GetByIdAsync(int id)
         {
             var query = "SELECT * FROM Colaborador WHERE Id = @Id AND Excluido = 0";
             

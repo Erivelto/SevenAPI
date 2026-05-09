@@ -556,7 +556,7 @@ namespace PlataformaSeven.API.Controllers
         /// <summary>
         /// Relatório consolidado de diárias com totais e adiantamentos por colaborador
         /// </summary>
-        [HttpGet("consolidadoPorData")]
+        [HttpGet("consolidado")]
         public async Task<ActionResult<IEnumerable<DiariaConsolidado>>> RelatorioConsolidado(
             [FromQuery] DateTime inicial,
             [FromQuery] DateTime final)
@@ -567,49 +567,7 @@ namespace PlataformaSeven.API.Controllers
             var result = await _service.RelatorioConsolidadoAsync(inicial, final);
             return Ok(result);
         }
-		[HttpGet("consolidado")]
-		public async Task<ActionResult<IEnumerable<DiariaConsolidado>>> RelatorioConsolidado()
-		{
-
-			TimeZoneInfo saoPauloTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
-			DateTime saoPauloNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, saoPauloTimeZone);
-			var periodo = GetWeekPeriod(saoPauloNow);
-
-			var result = await _service.RelatorioConsolidadoAsync(periodo.startOfWeek, periodo.endOfWeek);
-			return Ok(result);
-		}
-		private DateTime GetLastThursday(DateTime date)
-		{
-			// Achar a última quinta-feira
-			DateTime lastThursday = date;
-			while (lastThursday.DayOfWeek != DayOfWeek.Thursday)
-			{
-				lastThursday = lastThursday.AddDays(-1);
-			}
-
-			return lastThursday;
-		}
-		private DateTime GetLastWednesday(DateTime date)
-		{
-			// Achar a última quarta-feira
-			DateTime lastWednesday = date;
-			while (lastWednesday.DayOfWeek != DayOfWeek.Wednesday)
-			{
-				lastWednesday = lastWednesday.AddDays(-1);
-			}
-
-			return lastWednesday;
-		}
-		private (DateTime startOfWeek, DateTime endOfWeek) GetWeekPeriod(DateTime date)
-		{
-
-			var _dt = GetLastThursday(date).AddDays(-3);
-			DateTime startOfWeek = _dt;
-			DateTime endOfWeek = _dt.AddDays(6);
-
-			return (startOfWeek, endOfWeek);
-		}
-	}
+    }
 
     // ==================== UsuarioPermissao Controller ====================
     [Authorize]

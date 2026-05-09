@@ -75,7 +75,15 @@ namespace PlataformaSeven.API.Repositories
             if (posto.HasValue) parameters.Add("Posto", posto.Value);
 
             using var connection = _context.CreateConnection();
-            return await connection.QueryAsync<ListaDiariaRelatorio>(query, parameters);
+            var lista = (await connection.QueryAsync<ListaDiariaRelatorio>(query, parameters)).ToList();
+
+            // Replica o loop do legado: popula o Detalhe de cada colaborador no periodo
+            foreach (var item in lista)
+            {
+                item.Detalhe = await ListaDiariaColaboradorAsync(inicial, final, item.IdColaboradorDetalhe);
+            }
+
+            return lista;
         }
 
         public async Task<IEnumerable<DiariaConsolidado>> RelatorioConsolidadoAsync(DateTime inicial, DateTime final)

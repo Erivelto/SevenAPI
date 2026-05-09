@@ -9,6 +9,8 @@ namespace PlataformaSeven.API.Repositories
         Task<int> CreateAsync(Colaborador colaborador);
         Task<bool> UpdateAsync(Colaborador colaborador);
         Task<bool> DeleteAsync(int id);
-    }
+        Task<Colaborador?> GetByReferenciaAsync(string referencia);
+
+	}
 }
 

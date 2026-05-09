@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlataformaSeven.API.Models;
 using PlataformaSeven.API.Services;
@@ -50,24 +49,7 @@ namespace PlataformaSeven.API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            // Validar CPF no campo Referencia
-            if (!string.IsNullOrWhiteSpace(colaborador.Referencia))
-            {
-                var cpfLimpo = colaborador.Referencia.Replace(".", "").Replace("-", "").Replace(" ", "").Trim();
-
-                if (!ValidarCpf(cpfLimpo))
-                    return BadRequest(new { message = "CPF informado no campo Referência é inválido." });
-
-                // Verificar duplicidade
-                var existente = await _service.GetByReferenciaAsync(cpfLimpo);
-                if (existente != null)
-                    return BadRequest(new { message = $"CPF já cadastrado para o colaborador: {existente.Nome}." });
-
-                // Salvar CPF somente com numeros
-                colaborador.Referencia = cpfLimpo;
-            }
-
+            
             var id = await _service.CreateAsync(colaborador);
             return CreatedAtAction(nameof(GetById), new { id }, new { id, message = "Colaborador criado com sucesso" });
         }
@@ -83,23 +65,7 @@ namespace PlataformaSeven.API.Controllers
             
             if (id != colaborador.Id)
                 return BadRequest(new { message = "ID do colaborador não corresponde" });
-
-            // Validar CPF no campo Referencia
-            if (!string.IsNullOrWhiteSpace(colaborador.Referencia))
-            {
-                var cpfLimpo = colaborador.Referencia.Replace(".", "").Replace("-", "").Replace(" ", "").Trim();
-
-                if (!ValidarCpf(cpfLimpo))
-                    return BadRequest(new { message = "CPF informado no campo Referência é inválido." });
-
-                // Verificar duplicidade (excluir o proprio registro)
-                var existente = await _service.GetByReferenciaAsync(cpfLimpo);
-                if (existente != null && existente.Id != id)
-                    return BadRequest(new { message = $"CPF já cadastrado para o colaborador: {existente.Nome}." });
-
-                colaborador.Referencia = cpfLimpo;
-            }
-
+            
             var success = await _service.UpdateAsync(colaborador);
             
             if (!success)
@@ -120,40 +86,6 @@ namespace PlataformaSeven.API.Controllers
                 return NotFound(new { message = "Colaborador não encontrado" });
             
             return Ok(new { message = "Colaborador excluído com sucesso" });
-        }
-
-        /// <summary>
-        /// Valida um CPF brasileiro (11 digitos numericos).
-        /// </summary>
-        private static bool ValidarCpf(string cpf)
-        {
-            if (string.IsNullOrEmpty(cpf) || cpf.Length != 11 || !cpf.All(char.IsDigit))
-                return false;
-
-            // Rejeitar CPFs com todos os digitos iguais (ex: 111.111.111-11)
-            if (cpf.Distinct().Count() == 1)
-                return false;
-
-            // Calculo do primeiro digito verificador
-            var soma = 0;
-            for (int i = 0; i < 9; i++)
-                soma += (cpf[i] - '0') * (10 - i);
-
-            var resto = soma % 11;
-            var digito1 = resto < 2 ? 0 : 11 - resto;
-
-            if ((cpf[9] - '0') != digito1)
-                return false;
-
-            // Calculo do segundo digito verificador
-            soma = 0;
-            for (int i = 0; i < 10; i++)
-                soma += (cpf[i] - '0') * (11 - i);
-
-            resto = soma % 11;
-            var digito2 = resto < 2 ? 0 : 11 - resto;
-
-            return (cpf[10] - '0') == digito2;
         }
     }
 }

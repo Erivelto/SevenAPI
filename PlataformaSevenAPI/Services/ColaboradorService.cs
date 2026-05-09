@@ -39,6 +39,11 @@ namespace PlataformaSeven.API.Services
         {
             return await _repository.DeleteAsync(id);
         }
-    }
+
+		public Task<Colaborador?> GetByReferenciaAsync(string referencia)
+		{
+			return _repository.GetByReferenciaAsync(referencia);
+		}
+	}
 }
 
